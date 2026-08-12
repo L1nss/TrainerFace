@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#facc15">
+
+  <title>TrainerFace — Sua rotina de treinos.</title>
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+  <div id="toast"></div>
+
+  <!-- LOGIN -->
+  <section id="authScreen" class="auth-screen">
+
+    <div class="auth-card">
+
+      <div class="brand">
+        <span>TF</span> TrainerFace
+      </div>
+
+      <h1>Sua rotina. Organizada.</h1>
+
+      <p>
+        Organize seus treinos por dia da semana e tenha sua rotina sempre disponível.
+      </p>
+
+      <form id="authForm">
+
+        <label>E-mail</label>
+
+        <input id="email" type="email" autocomplete="email" required placeholder="seu@email.com">
+
+        <label>Senha</label>
+
+        <input id="password" type="password" autocomplete="current-password" minlength="6" required
+          placeholder="Mínimo de 6 caracteres">
+
+        <button class="primary" type="submit" id="authButton">
+          Entrar
+        </button>
+
+      </form>
+
+      <button class="link-button" id="toggleAuth">
+        Não tenho conta — criar agora
+      </button>
+
+      <p class="auth-message" id="authMessage"></p>
+
+    </div>
+
+  </section>
+
+
+  <!-- APLICAÇÃO -->
+  <div id="app" class="hidden">
+
+    <header class="topbar">
+
+      <div class="brand">
+        <span>TF</span> TrainerFace
+      </div>
+
+      <div class="top-actions">
+
+        <button class="icon-btn" id="themeToggle" title="Alternar tema">
+          ☾
+        </button>
+
+        <button class="logout" id="logout">
+          Sair
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <main class="container">
+
+      <!-- HERO -->
+      <section class="hero">
+
+        <div>
+
+          <p class="eyebrow">
+            MINHA ROTINA
+          </p>
+
+          <h1>
+            Olá, <span id="userEmail"></span>
+          </h1>
+
+          <p>
+            Organize os treinos que você precisa fazer em cada dia da semana.
+          </p>
+
+        </div>
+
+        <button class="primary" id="newWorkout">
+          + Novo treino
+        </button>
+
+      </section>
+
+
+      <!-- ESTATÍSTICAS -->
+      <section class="stats">
+
+        <article class="stat">
+          <span>Treinos cadastrados</span>
+          <strong id="totalWorkouts">0</strong>
+        </article>
+
+        <article class="stat">
+          <span>Dias com treino</span>
+          <strong id="activeDays">0</strong>
+        </article>
+
+        <article class="stat">
+          <span>Dias de descanso</span>
+          <strong id="restDays">7</strong>
+        </article>
+
+      </section>
+
+
+      <!-- FILTROS -->
+      <section class="toolbar">
+
+        <input id="search" type="search" placeholder="Pesquisar treino...">
+
+        <select id="filterDay">
+
+          <option value="">Todos os dias</option>
+
+          <option value="1">Segunda-feira</option>
+          <option value="2">Terça-feira</option>
+          <option value="3">Quarta-feira</option>
+          <option value="4">Quinta-feira</option>
+          <option value="5">Sexta-feira</option>
+          <option value="6">Sábado</option>
+          <option value="0">Domingo</option>
+
+        </select>
+
+        <button class="secondary" id="clearFilters">
+          Limpar filtros
+        </button>
+
+      </section>
+
+
+      <!-- TREINOS -->
+      <section id="workoutsList" class="workouts-grid"></section>
+
+
+      <!-- VAZIO -->
+      <div id="emptyState" class="empty hidden">
+
+        <div class="empty-icon">
+          +
+        </div>
+
+        <h2>Nenhum treino encontrado</h2>
+
+        <p>
+          Cadastre sua rotina semanal para começar.
+        </p>
+
+        <button class="primary" id="emptyNew">
+          Adicionar treino
+        </button>
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <!-- MODAL -->
+  <dialog id="workoutDialog">
+
+    <form method="dialog" id="workoutForm" class="modal">
+
+      <div class="modal-header">
+
+        <div>
+
+          <p class="eyebrow">
+            ROTINA SEMANAL
+          </p>
+
+          <h2 id="modalTitle">
+            Novo treino
+          </h2>
+
+        </div>
+
+        <button type="button" class="close" id="closeModal">
+          ×
+        </button>
+
+      </div>
+
+
+      <input type="hidden" id="workoutId">
+
+
+      <label>Dia da semana</label>
+
+      <select id="workoutDay" required>
+
+        <option value="">Selecione o dia</option>
+
+        <option value="1">Segunda-feira</option>
+        <option value="2">Terça-feira</option>
+        <option value="3">Quarta-feira</option>
+        <option value="4">Quinta-feira</option>
+        <option value="5">Sexta-feira</option>
+        <option value="6">Sábado</option>
+        <option value="0">Domingo</option>
+
+      </select>
+
+
+      <label>Nome do treino</label>
+
+      <input id="workoutName" required placeholder="Ex.: Peito e tríceps">
+
+
+      <label>Observações</label>
+
+      <textarea id="workoutNotes" rows="3" placeholder="Observações sobre esse treino..."></textarea>
+
+
+      <div class="exercise-title">
+
+        <h3>
+          Exercícios
+        </h3>
+
+        <button type="button" class="secondary small" id="addExercise">
+          + Exercício
+        </button>
+
+      </div>
+
+
+      <div id="exerciseRows"></div>
+
+
+      <div class="modal-actions">
+
+        <button type="button" class="secondary" id="cancelModal">
+          Cancelar
+        </button>
+
+        <button type="submit" class="primary" id="saveWorkout">
+          Salvar treino
+        </button>
+
+      </div>
+
+    </form>
+
+  </dialog>
+
+
+  <script src="js/supabase.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+
+</html>
