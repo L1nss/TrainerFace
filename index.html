@@ -2,10 +2,12 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <meta name="description" content="Trainer Face - planejamento de treinos" />
+    <meta
+      name="description"
+      content="Trainer Face - planejamento e evolução de treinos"
+    />
 
     <title>Trainer Face</title>
 
@@ -13,9 +15,17 @@
   </head>
 
   <body>
+    <!-- =====================================================
+         LOADING
+    ====================================================== -->
+
     <div id="loading" class="loading">
       <div class="spinner"></div>
     </div>
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
 
     <header class="topbar">
       <div class="brand">
@@ -28,36 +38,67 @@
       </div>
 
       <div class="header-actions">
-        <button id="themeButton" class="icon-button" title="Alternar tema">
+        <button
+          type="button"
+          id="themeButton"
+          class="icon-button"
+          title="Alternar tema"
+        >
           ◐
         </button>
 
-        <button id="logoutButton" class="secondary-button">Sair</button>
+        <button type="button" id="logoutButton" class="secondary-button">
+          Sair
+        </button>
       </div>
     </header>
 
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
     <main class="container">
+      <!-- ===================================================
+           BOAS-VINDAS
+      ==================================================== -->
+
       <section class="welcome-card">
         <div>
           <span class="eyebrow">PAINEL</span>
 
           <h2>Seus treinos planejados</h2>
 
-          <p>Organize seus treinos por dia da semana.</p>
+          <p>
+            Organize seus treinos por dia da semana e acompanhe sua evolução.
+          </p>
         </div>
       </section>
 
+      <!-- ===================================================
+           TABS
+      ==================================================== -->
+
       <nav class="tabs">
-        <button class="tab active" data-section="treinos">Meus treinos</button>
+        <button type="button" class="tab active" data-section="treinos">
+          Meus treinos
+        </button>
 
-        <button class="tab" data-section="montar">Montar treino</button>
+        <button type="button" class="tab" data-section="montar">
+          Montar treino
+        </button>
 
-        <button class="tab" data-section="pdf">Importar PDF</button>
+        <button type="button" class="tab" data-section="pdf">
+          Importar PDF
+        </button>
+
+        <button type="button" class="tab" data-section="evolucao">
+          Evolução de carga
+        </button>
       </nav>
 
-      <!-- ========================= -->
-      <!-- TREINOS -->
-      <!-- ========================= -->
+      <!-- ===================================================
+           MEUS TREINOS
+      ==================================================== -->
 
       <section id="section-treinos" class="section active">
         <div class="section-header">
@@ -67,7 +108,7 @@
             <h2>Meus treinos</h2>
           </div>
 
-          <button id="newWorkoutButton" class="primary-button">
+          <button type="button" id="newWorkoutButton" class="primary-button">
             + Novo treino
           </button>
         </div>
@@ -75,9 +116,9 @@
         <div id="workoutList" class="workout-grid"></div>
       </section>
 
-      <!-- ========================= -->
-      <!-- MONTAR TREINO -->
-      <!-- ========================= -->
+      <!-- ===================================================
+           MONTAR TREINO
+      ==================================================== -->
 
       <section id="section-montar" class="section">
         <div class="section-header">
@@ -200,6 +241,8 @@
           </button>
         </form>
 
+        <!-- TREINO GERADO -->
+
         <div id="generatedWorkout" class="preview-card hidden">
           <div class="preview-header">
             <div>
@@ -208,8 +251,12 @@
               <h2>Treino gerado</h2>
             </div>
 
-            <button id="saveGeneratedButton" class="primary-button">
-              Salvar treino
+            <button
+              type="button"
+              id="saveGeneratedButton"
+              class="primary-button"
+            >
+              Salvar todos os treinos
             </button>
           </div>
 
@@ -217,9 +264,9 @@
         </div>
       </section>
 
-      <!-- ========================= -->
-      <!-- PDF -->
-      <!-- ========================= -->
+      <!-- ===================================================
+           IMPORTAR PDF
+      ==================================================== -->
 
       <section id="section-pdf" class="section">
         <div class="section-header">
@@ -253,10 +300,17 @@
             />
           </label>
 
-          <button id="importPdfButton" class="primary-button full" disabled>
+          <button
+            type="button"
+            id="importPdfButton"
+            class="primary-button full"
+            disabled
+          >
             Analisar PDF
           </button>
         </div>
+
+        <!-- PRÉVIA PDF -->
 
         <div id="pdfPreview" class="preview-card hidden">
           <div class="preview-header">
@@ -266,7 +320,11 @@
               <h2>Treino encontrado</h2>
             </div>
 
-            <button id="savePdfWorkoutButton" class="primary-button">
+            <button
+              type="button"
+              id="savePdfWorkoutButton"
+              class="primary-button"
+            >
               Salvar treino
             </button>
           </div>
@@ -274,27 +332,164 @@
           <div id="pdfPreviewContent"></div>
         </div>
       </section>
+
+      <!-- ===================================================
+           EVOLUÇÃO DE CARGA
+      ==================================================== -->
+
+      <section id="section-evolucao" class="section">
+        <div class="section-header">
+          <div>
+            <span class="eyebrow"> PROGRESSÃO </span>
+
+            <h2>Evolução de carga</h2>
+
+            <p>
+              Selecione um exercício para acompanhar a evolução das cargas ao
+              longo do tempo.
+            </p>
+          </div>
+        </div>
+
+        <!-- CONTROLES -->
+
+        <div class="form-card">
+          <div class="form-grid">
+            <div class="field">
+              <label for="progressExercise"> Exercício </label>
+
+              <select id="progressExercise">
+                <option value="">Carregando exercícios...</option>
+              </select>
+
+              <small>
+                Os exercícios cadastrados nos seus treinos aparecerão aqui.
+              </small>
+            </div>
+
+            <div class="field">
+              <label for="progressDate"> Data </label>
+
+              <input id="progressDate" type="date" />
+            </div>
+
+            <div class="field">
+              <label for="progressWeight"> Carga (kg) </label>
+
+              <input
+                id="progressWeight"
+                type="number"
+                min="0"
+                step="0.5"
+                placeholder="Ex.: 20"
+              />
+            </div>
+
+            <div class="field">
+              <label for="progressReps"> Repetições </label>
+
+              <input
+                id="progressReps"
+                type="number"
+                min="1"
+                placeholder="Ex.: 10"
+              />
+            </div>
+
+            <div class="field">
+              <label for="progressSets"> Séries </label>
+
+              <input
+                id="progressSets"
+                type="number"
+                min="1"
+                placeholder="Ex.: 3"
+              />
+            </div>
+          </div>
+
+          <div
+            style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px"
+          >
+            <button
+              type="button"
+              id="saveProgressButton"
+              class="primary-button"
+            >
+              Registrar evolução
+            </button>
+
+            <button
+              type="button"
+              id="refreshProgressButton"
+              class="secondary-button"
+            >
+              Atualizar
+            </button>
+          </div>
+        </div>
+
+        <!-- RESUMO -->
+
+        <div id="progressSummary" class="preview-card" style="margin-top: 20px">
+          <div class="preview-header">
+            <div>
+              <span class="eyebrow"> RESUMO </span>
+
+              <h2>Evolução</h2>
+            </div>
+          </div>
+
+          <div id="progressStats">
+            <div class="empty">
+              Selecione um exercício para visualizar sua evolução.
+            </div>
+          </div>
+        </div>
+
+        <!-- TIMELINE -->
+
+        <div
+          id="progressTimeline"
+          class="preview-card"
+          style="margin-top: 20px"
+        >
+          <div class="preview-header">
+            <div>
+              <span class="eyebrow"> HISTÓRICO </span>
+
+              <h2>Timeline de carga</h2>
+            </div>
+          </div>
+
+          <div id="progressTimelineContent">
+            <div class="empty">
+              Selecione um exercício para visualizar o histórico.
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <!-- ========================= -->
-    <!-- MODAL NOVO TREINO -->
-    <!-- ========================= -->
+    <!-- =====================================================
+         MODAL NOVO / EDITAR TREINO
+    ====================================================== -->
 
     <div id="workoutModal" class="modal hidden">
       <div class="modal-box">
         <div class="modal-header">
           <div>
-            <span class="eyebrow"> NOVO </span>
+            <span class="eyebrow"> TREINO </span>
 
             <h2>Criar treino</h2>
           </div>
 
-          <button id="closeModal" class="close-button">×</button>
+          <button type="button" id="closeModal" class="close-button">×</button>
         </div>
 
         <form id="manualWorkoutForm">
           <div class="field">
-            <label> Nome do treino </label>
+            <label for="manualName"> Nome do treino </label>
 
             <input
               id="manualName"
@@ -304,7 +499,7 @@
           </div>
 
           <div class="field">
-            <label> Dia da semana </label>
+            <label for="manualWeekday"> Dia da semana </label>
 
             <select id="manualWeekday">
               <option value="1">Segunda-feira</option>
@@ -324,7 +519,7 @@
           </div>
 
           <div class="field">
-            <label> Observações </label>
+            <label for="manualNotes"> Observações </label>
 
             <textarea
               id="manualNotes"
@@ -349,14 +544,22 @@
             <div id="manualExercises"></div>
           </div>
 
-          <button class="primary-button full" type="submit">
+          <button type="submit" class="primary-button full">
             Salvar treino
           </button>
         </form>
       </div>
     </div>
 
+    <!-- =====================================================
+         TOAST
+    ====================================================== -->
+
     <div id="toast" class="toast"></div>
+
+    <!-- =====================================================
+         APP
+    ====================================================== -->
 
     <script type="module" src="./js/app.js"></script>
   </body>
