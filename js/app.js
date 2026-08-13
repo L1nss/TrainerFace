@@ -1,421 +1,498 @@
-const $ = (id) => document.getElementById(id);
+import { supabase } from "./supabase.js";
 
-let currentUser = null;
-let workouts = [];
-let authMode = "login";
 
 const DAYS = {
-  0: "Domingo",
-  1: "Segunda-feira",
-  2: "Terça-feira",
-  3: "Quarta-feira",
-  4: "Quinta-feira",
-  5: "Sexta-feira",
-  6: "Sábado"
+    0: "Domingo",
+    1: "Segunda-feira",
+    2: "Terça-feira",
+    3: "Quarta-feira",
+    4: "Quinta-feira",
+    5: "Sexta-feira",
+    6: "Sábado"
 };
 
-document.addEventListener("DOMContentLoaded", async () => {
 
-  loadTheme();
-  bindEvents();
+let currentUser = null;
 
-  const { data } = await db.auth.getSession();
+let generatedWorkout = null;
 
-  if (data.session) {
-    showApp(data.session.user);
-  } else {
-    showAuth();
-  }
+let importedWorkout = null;
 
-  db.auth.onAuthStateChange((event, session) => {
+let selectedPdf = null;
 
-    if (session) {
-      showApp(session.user);
-    } else {
-      showAuth();
+
+const $ = (selector) =>
+    document.querySelector(selector);
+
+
+const $$ = (selector) =>
+    document.querySelectorAll(selector);
+
+
+function showLoading(value) {
+
+    $("#loading").classList.toggle(
+        "show",
+        value
+    );
+}
+
+
+function toast(message) {
+
+    const element = $("#toast");
+
+    element.textContent = message;
+
+    element.classList.add("show");
+
+    setTimeout(() => {
+        element.classList.remove("show");
+    }, 3000);
+}
+
+
+function escapeHTML(value = "") {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+/* =========================
+   AUTENTICAÇÃO
+========================= */
+
+async function checkUser() {
+
+    const {
+        data,
+        error
+    } = await supabase.auth.getUser();
+
+    if (error || !data.user) {
+
+        window.location.href = "login.html";
+
+        return;
     }
 
-  });
+    currentUser = data.user;
+
+    await loadWorkouts();
+}
+
+
+$("#logoutButton").addEventListener(
+    "click",
+    async () => {
+
+        await supabase.auth.signOut();
+
+        window.location.href =
+            "login.html";
+    }
+);
+
+
+/* =========================
+   TABS
+========================= */
+
+$$(".tab").forEach(button => {
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            $$(".tab").forEach(tab => {
+                tab.classList.remove("active");
+            });
+
+            $$(".section").forEach(section => {
+                section.classList.remove("active");
+            });
+
+            button.classList.add("active");
+
+            const section =
+                $("#section-" +
+                button.dataset.section);
+
+            section.classList.add("active");
+        }
+    );
 
 });
 
 
-function bindEvents() {
+/* =========================
+   TEMA
+========================= */
 
-  $("authForm").addEventListener("submit", handleAuth);
+const savedTheme =
+    localStorage.getItem(
+        "trainer-face-theme"
+    );
 
-  $("toggleAuth").addEventListener("click", toggleAuth);
-
-  $("logout").addEventListener("click", () => {
-    db.auth.signOut();
-  });
-
-  $("themeToggle").addEventListener("click", toggleTheme);
-
-  $("newWorkout").addEventListener("click", openNewWorkout);
-
-  $("emptyNew").addEventListener("click", openNewWorkout);
-
-  $("closeModal").addEventListener("click", closeModal);
-
-  $("cancelModal").addEventListener("click", closeModal);
-
-  $("addExercise").addEventListener("click", addExerciseRow);
-
-  $("workoutForm").addEventListener("submit", saveWorkout);
-
-  $("search").addEventListener("input", renderWorkouts);
-
-  $("filterDay").addEventListener("change", renderWorkouts);
-
-  $("clearFilters").addEventListener("click", () => {
-
-    $("search").value = "";
-    $("filterDay").value = "";
-
-    renderWorkouts();
-
-  });
-
+if (savedTheme === "light") {
+    document.body.classList.add("light");
 }
 
 
-async function handleAuth(e) {
+$("#themeButton").addEventListener(
+    "click",
+    () => {
 
-  e.preventDefault();
+        document.body.classList.toggle(
+            "light"
+        );
 
-  const email = $("email").value.trim();
-  const password = $("password").value;
-
-  $("authButton").disabled = true;
-  $("authMessage").textContent = "Processando...";
-
-  let result;
-
-  if (authMode === "login") {
-
-    result = await db.auth.signInWithPassword({
-      email,
-      password
-    });
-
-  } else {
-
-    result = await db.auth.signUp({
-      email,
-      password
-    });
-
-  }
-
-  $("authButton").disabled = false;
-
-  if (result.error) {
-
-    $("authMessage").textContent = result.error.message;
-    return;
-
-  }
-
-  $("authMessage").textContent =
-    authMode === "login"
-      ? ""
-      : "Conta criada. Verifique seu e-mail se a confirmação estiver ativada.";
-
-}
+        localStorage.setItem(
+            "trainer-face-theme",
+            document.body.classList.contains(
+                "light"
+            )
+                ? "light"
+                : "dark"
+        );
+    }
+);
 
 
-function toggleAuth() {
-
-  authMode = authMode === "login"
-    ? "signup"
-    : "login";
-
-  $("authButton").textContent =
-    authMode === "login"
-      ? "Entrar"
-      : "Criar conta";
-
-  $("toggleAuth").textContent =
-    authMode === "login"
-      ? "Não tenho conta — criar agora"
-      : "Já tenho conta — entrar";
-
-  $("authMessage").textContent = "";
-
-}
-
-
-function showAuth() {
-
-  $("authScreen").classList.remove("hidden");
-
-  $("app").classList.add("hidden");
-
-}
-
-
-async function showApp(user) {
-
-  currentUser = user;
-
-  $("authScreen").classList.add("hidden");
-
-  $("app").classList.remove("hidden");
-
-  $("userEmail").textContent = user.email;
-
-  await loadWorkouts();
-
-}
-
+/* =========================
+   CARREGAR TREINOS
+========================= */
 
 async function loadWorkouts() {
 
-  const { data, error } = await db
-    .from("workouts")
-    .select("*, exercises(*)")
-    .order("weekday", { ascending: true })
-    .order("created_at", { ascending: true });
+    showLoading(true);
 
-  if (error) {
+    const {
+        data,
+        error
+    } = await supabase
+        .from("workouts")
+        .select(`
+            id,
+            name,
+            weekday,
+            notes,
+            created_at,
+            exercises (
+                id,
+                name,
+                sets,
+                reps,
+                weight,
+                position
+            )
+        `)
+        .eq("user_id", currentUser.id)
+        .order("weekday", {
+            ascending: true
+        });
 
-    toast(error.message);
-    return;
+    showLoading(false);
 
-  }
+    if (error) {
 
-  workouts = data || [];
+        console.error(error);
 
-  updateStats();
-  renderWorkouts();
+        toast(
+            "Erro ao carregar seus treinos."
+        );
 
+        return;
+    }
+
+    renderWorkouts(data || []);
 }
 
 
-function updateStats() {
+function renderWorkouts(workouts) {
 
-  $("totalWorkouts").textContent = workouts.length;
+    const container =
+        $("#workoutList");
 
-  const activeDays = new Set(
-    workouts.map(workout => workout.weekday)
-  ).size;
+    if (!workouts.length) {
 
-  $("activeDays").textContent = activeDays;
+        container.innerHTML = `
+            <div class="empty">
+                Nenhum treino cadastrado.
+                <br><br>
+                Use "Novo treino", "Montar treino"
+                ou "Importar PDF".
+            </div>
+        `;
 
-  $("restDays").textContent = Math.max(
-    0,
-    7 - activeDays
-  );
-
-}
-
-
-function renderWorkouts() {
-
-  const search = $("search")
-    .value
-    .toLowerCase()
-    .trim();
-
-  const day = $("filterDay").value;
+        return;
+    }
 
 
-  const filtered = workouts.filter(workout => {
+    container.innerHTML =
+        workouts.map(workout => {
 
-    const matchesSearch =
-      !search ||
-      workout.name.toLowerCase().includes(search) ||
-      (workout.notes || "")
-        .toLowerCase()
-        .includes(search);
-
-    const matchesDay =
-      !day ||
-      String(workout.weekday) === String(day);
-
-    return matchesSearch && matchesDay;
-
-  });
+            const exercises =
+                [...(workout.exercises || [])]
+                .sort(
+                    (a, b) =>
+                        a.position - b.position
+                );
 
 
-  const sorted = [...filtered].sort((a, b) => {
+            return `
+                <article class="workout-card">
 
-    return getDayOrder(a.weekday) -
-      getDayOrder(b.weekday);
+                    <span class="workout-day">
+                        ${DAYS[workout.weekday]}
+                    </span>
 
-  });
+                    <h3>
+                        ${escapeHTML(workout.name)}
+                    </h3>
 
+                    ${
+                        workout.notes
+                            ? `
+                                <p>
+                                    ${escapeHTML(
+                                        workout.notes
+                                    )}
+                                </p>
+                              `
+                            : ""
+                    }
 
-  $("workoutsList").innerHTML = sorted.map(workout => {
+                    <ul class="exercise-list">
 
-    const exercises = (workout.exercises || [])
-      .sort((a, b) => a.position - b.position);
+                        ${
+                            exercises.length
+                                ? exercises.map(
+                                    exercise => `
+                                        <li>
+                                            <strong>
+                                                ${escapeHTML(
+                                                    exercise.name
+                                                )}
+                                            </strong>
 
+                                            <br>
 
-    return `
+                                            ${
+                                                exercise.sets
+                                                    ? `${exercise.sets} séries`
+                                                    : ""
+                                            }
 
-            <article class="workout-card">
+                                            ${
+                                                exercise.reps
+                                                    ? ` × ${escapeHTML(
+                                                        exercise.reps
+                                                    )}`
+                                                    : ""
+                                            }
 
-                <div class="workout-head">
+                                            ${
+                                                exercise.weight
+                                                    ? ` — ${exercise.weight} kg`
+                                                    : ""
+                                            }
+                                        </li>
+                                    `
+                                ).join("")
+                                : `
+                                    <li>
+                                        Nenhum exercício.
+                                    </li>
+                                `
+                        }
 
-                    <div>
+                    </ul>
 
-                        <div class="date">
-                            ${getDayName(workout.weekday)}
-                        </div>
+                    <div class="card-actions">
 
-                        <h3>
-                            ${escapeHtml(workout.name)}
-                        </h3>
+                        <button
+                            class="secondary-button delete-button"
+                            data-delete="${workout.id}"
+                        >
+                            Excluir
+                        </button>
 
                     </div>
 
-                </div>
+                </article>
+            `;
+
+        }).join("");
 
 
-                ${workout.notes
-        ? `
-                            <p class="notes">
-                                ${escapeHtml(workout.notes)}
-                            </p>
-                          `
-        : ""
-      }
+    $$("[data-delete]").forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () =>
+                deleteWorkout(
+                    button.dataset.delete
+                )
+        );
+
+    });
+}
 
 
-                <div>
+/* =========================
+   EXCLUIR
+========================= */
 
-                    ${exercises.map(exercise => `
+async function deleteWorkout(id) {
 
-                        <div class="exercise">
+    const confirmed =
+        confirm(
+            "Excluir este treino?"
+        );
 
-                            <div class="exercise-name">
-                                ${escapeHtml(exercise.name)}
-                            </div>
+    if (!confirmed) {
+        return;
+    }
 
-                            <div class="exercise-meta">
 
-                                ${exercise.sets ?? "—"} séries ·
+    showLoading(true);
 
-                                ${exercise.reps ?? "—"} repetições ·
+    const {
+        error
+    } = await supabase
+        .from("workouts")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", currentUser.id);
 
-                                ${exercise.weight ?? "—"} kg
+    showLoading(false);
 
-                                ${exercise.notes
-          ? " · " + escapeHtml(exercise.notes)
-          : ""
+
+    if (error) {
+
+        console.error(error);
+
+        toast(
+            "Não foi possível excluir."
+        );
+
+        return;
+    }
+
+
+    toast(
+        "Treino excluído."
+    );
+
+    await loadWorkouts();
+}
+
+
+/* =========================
+   MODAL
+========================= */
+
+$("#newWorkoutButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            $("#workoutModal")
+                .classList.remove(
+                    "hidden"
+                );
+
+            if (
+                !$("#manualExercises")
+                    .children.length
+            ) {
+                addExerciseRow();
+            }
         }
-
-                            </div>
-
-                        </div>
-
-                    `).join("")}
-
-                </div>
+    );
 
 
-                <div class="card-actions">
-
-                    <button
-                        class="edit"
-                        onclick="editWorkout('${workout.id}')"
-                    >
-                        Editar
-                    </button>
-
-                    <button
-                        class="danger"
-                        onclick="deleteWorkout('${workout.id}')"
-                    >
-                        Excluir
-                    </button>
-
-                </div>
-
-            </article>
-
-        `;
-
-  }).join("");
+$("#closeModal")
+    .addEventListener(
+        "click",
+        closeModal
+    );
 
 
-  $("emptyState").classList.toggle(
-    "hidden",
-    filtered.length !== 0
-  );
+function closeModal() {
 
+    $("#workoutModal")
+        .classList.add("hidden");
+
+    $("#manualWorkoutForm").reset();
+
+    $("#manualExercises").innerHTML = "";
 }
 
 
-function openNewWorkout() {
+/* =========================
+   EXERCÍCIOS MANUAIS
+========================= */
 
-  $("workoutId").value = "";
-
-  $("workoutDay").value = "";
-
-  $("workoutName").value = "";
-
-  $("workoutNotes").value = "";
-
-  $("exerciseRows").innerHTML = "";
-
-  $("modalTitle").textContent = "Novo treino";
-
-  addExerciseRow();
-
-  $("workoutDialog").showModal();
-
-}
+$("#addExerciseButton")
+    .addEventListener(
+        "click",
+        addExerciseRow
+    );
 
 
-function addExerciseRow(
-  data = {
-    name: "",
-    sets: "",
-    reps: "",
-    weight: "",
-    notes: ""
-  }
-) {
+function addExerciseRow(data = {}) {
 
-  const row = document.createElement("div");
+    const container =
+        $("#manualExercises");
 
-  row.className = "exercise-row";
+    const row =
+        document.createElement("div");
 
-  row.innerHTML = `
+    row.className =
+        "exercise-row";
+
+
+    row.innerHTML = `
 
         <input
-            class="ex-name"
-            required
+            class="exercise-name"
             placeholder="Exercício"
-            value="${escapeAttr(data.name)}"
+            value="${escapeHTML(
+                data.name || ""
+            )}"
+            required
         >
 
         <input
-            class="ex-sets"
+            class="exercise-sets"
             type="number"
-            min="0"
+            min="1"
             placeholder="Séries"
-            value="${data.sets ?? ""}"
+            value="${data.sets || ""}"
         >
 
         <input
-            class="ex-reps"
-            type="number"
-            min="0"
+            class="exercise-reps"
             placeholder="Reps"
-            value="${data.reps ?? ""}"
+            value="${escapeHTML(
+                data.reps || ""
+            )}"
         >
 
         <input
-            class="ex-weight"
+            class="exercise-weight"
             type="number"
+            step="0.5"
             min="0"
-            step="0.1"
             placeholder="Kg"
-            value="${data.weight ?? ""}"
+            value="${data.weight || ""}"
         >
 
         <button
@@ -428,374 +505,1272 @@ function addExerciseRow(
     `;
 
 
-  row
-    .querySelector(".remove-exercise")
-    .onclick = () => row.remove();
+    row.querySelector(
+        ".remove-exercise"
+    ).addEventListener(
+        "click",
+        () => row.remove()
+    );
 
 
-  $("exerciseRows").appendChild(row);
-
+    container.appendChild(row);
 }
 
 
-async function saveWorkout(e) {
+/* =========================
+   SALVAR MANUAL
+========================= */
 
-  e.preventDefault();
+$("#manualWorkoutForm")
+    .addEventListener(
+        "submit",
+        async event => {
 
-  const id = $("workoutId").value;
+            event.preventDefault();
 
-  const payload = {
-
-    user_id: currentUser.id,
-
-    name: $("workoutName")
-      .value
-      .trim(),
-
-    weekday: Number(
-      $("workoutDay").value
-    ),
-
-    notes: $("workoutNotes")
-      .value
-      .trim()
-
-  };
+            const rows =
+                [...document.querySelectorAll(
+                    "#manualExercises .exercise-row"
+                )];
 
 
-  if (
-    !payload.name ||
-    Number.isNaN(payload.weekday)
-  ) {
+            const exercises =
+                rows.map((row, index) => {
 
-    toast("Preencha o dia e o nome do treino.");
+                    return {
+                        name:
+                            row.querySelector(
+                                ".exercise-name"
+                            ).value.trim(),
 
-    return;
+                        sets:
+                            Number(
+                                row.querySelector(
+                                    ".exercise-sets"
+                                ).value
+                            ) || null,
 
-  }
+                        reps:
+                            row.querySelector(
+                                ".exercise-reps"
+                            ).value.trim() || null,
 
+                        weight:
+                            Number(
+                                row.querySelector(
+                                    ".exercise-weight"
+                                ).value
+                            ) || null,
 
-  const rows = [
-    ...document.querySelectorAll(".exercise-row")
-  ];
+                        position: index
+                    };
 
-
-  if (!rows.length) {
-
-    toast("Adicione pelo menos um exercício.");
-
-    return;
-
-  }
-
-
-  $("saveWorkout").disabled = true;
-
-
-  let workoutId = id;
-
-  let error;
-
-
-  if (id) {
-
-    const result = await db
-      .from("workouts")
-      .update(payload)
-      .eq("id", id)
-      .eq("user_id", currentUser.id);
-
-    error = result.error;
-
-  } else {
-
-    const result = await db
-      .from("workouts")
-      .insert(payload)
-      .select()
-      .single();
-
-    error = result.error;
-
-    workoutId = result.data?.id;
-
-  }
+                });
 
 
-  if (error) {
+            await saveWorkout({
 
-    toast(error.message);
+                name:
+                    $("#manualName").value.trim(),
 
-    $("saveWorkout").disabled = false;
+                weekday:
+                    Number(
+                        $("#manualWeekday").value
+                    ),
 
-    return;
+                notes:
+                    $("#manualNotes").value.trim(),
 
-  }
+                exercises
+
+            });
 
 
-  if (id) {
+            closeModal();
+        }
+    );
 
-    const result = await db
-      .from("exercises")
-      .delete()
-      .eq("workout_id", id);
 
-    if (result.error) {
+/* =========================
+   SALVAR TREINO
+========================= */
 
-      toast(result.error.message);
+async function saveWorkout(workout) {
 
-      $("saveWorkout").disabled = false;
-
-      return;
-
+    if (!currentUser) {
+        return;
     }
 
-  }
+
+    showLoading(true);
 
 
-  const exercises = rows.map((row, index) => ({
+    const {
+        data,
+        error
+    } = await supabase
+        .from("workouts")
+        .insert({
 
-    workout_id: workoutId,
+            user_id:
+                currentUser.id,
 
-    name: row
-      .querySelector(".ex-name")
-      .value
-      .trim(),
+            name:
+                workout.name,
 
-    sets: numOrNull(
-      row.querySelector(".ex-sets").value
-    ),
+            weekday:
+                workout.weekday,
 
-    reps: numOrNull(
-      row.querySelector(".ex-reps").value
-    ),
+            notes:
+                workout.notes || null
 
-    weight: numOrNull(
-      row.querySelector(".ex-weight").value
-    ),
-
-    position: index
-
-  }));
+        })
+        .select()
+        .single();
 
 
-  const result = await db
-    .from("exercises")
-    .insert(exercises);
+    if (error) {
+
+        showLoading(false);
+
+        console.error(error);
+
+        toast(
+            "Erro ao salvar treino."
+        );
+
+        return;
+    }
 
 
-  $("saveWorkout").disabled = false;
+    if (
+        workout.exercises &&
+        workout.exercises.length
+    ) {
+
+        const exercises =
+            workout.exercises.map(
+                (exercise, index) => ({
+
+                    workout_id:
+                        data.id,
+
+                    name:
+                        exercise.name,
+
+                    sets:
+                        exercise.sets || null,
+
+                    reps:
+                        exercise.reps || null,
+
+                    weight:
+                        exercise.weight || null,
+
+                    position:
+                        exercise.position ?? index
+
+                })
+            );
 
 
-  if (result.error) {
+        const {
+            error:
+            exerciseError
+        } = await supabase
+            .from("exercises")
+            .insert(exercises);
 
-    toast(result.error.message);
 
-    return;
+        if (exerciseError) {
 
-  }
+            await supabase
+                .from("workouts")
+                .delete()
+                .eq("id", data.id);
+
+            showLoading(false);
+
+            console.error(
+                exerciseError
+            );
+
+            toast(
+                "Erro ao salvar exercícios."
+            );
+
+            return;
+        }
+    }
 
 
-  closeModal();
+    showLoading(false);
 
-  toast(
-    id
-      ? "Treino atualizado."
-      : "Treino adicionado à rotina."
-  );
+    toast(
+        "Treino salvo."
+    );
 
-  await loadWorkouts();
-
+    await loadWorkouts();
 }
 
 
-async function editWorkout(id) {
+/* =========================
+   GERADOR DE TREINO
+========================= */
 
-  const workout = workouts.find(
-    workout => workout.id === id
-  );
+$("#generatorForm")
+    .addEventListener(
+        "submit",
+        event => {
 
-  if (!workout) return;
+            event.preventDefault();
 
+            generatedWorkout =
+                generateWorkout();
 
-  $("workoutId").value = workout.id;
-
-  $("workoutDay").value = workout.weekday;
-
-  $("workoutName").value = workout.name;
-
-  $("workoutNotes").value =
-    workout.notes || "";
-
-
-  $("modalTitle").textContent =
-    "Editar treino";
+            renderGeneratedWorkout(
+                generatedWorkout
+            );
+        }
+    );
 
 
-  $("exerciseRows").innerHTML = "";
+function generateWorkout() {
+
+    const days =
+        Number(
+            $("#daysPerWeek").value
+        );
+
+    const goal =
+        $("#goal").value;
+
+    const experience =
+        $("#experience").value;
+
+    const equipment =
+        $("#equipment").value;
 
 
-  (workout.exercises || [])
-    .sort((a, b) => a.position - b.position)
-    .forEach(addExerciseRow);
+    const exerciseDatabase =
+        getExercises(
+            equipment,
+            goal
+        );
 
 
-  if (!(workout.exercises || []).length) {
-
-    addExerciseRow();
-
-  }
+    const splits =
+        createSplit(days);
 
 
-  $("workoutDialog").showModal();
+    const workouts =
+        splits.map(
+            (split, index) => {
 
+                const exercises =
+                    chooseExercises(
+                        split,
+                        exerciseDatabase,
+                        experience
+                    );
+
+
+                return {
+
+                    name:
+                        split.name,
+
+                    weekday:
+                        split.weekday,
+
+                    notes:
+                        `Sugestão gerada para ${goal}.`,
+
+                    exercises
+
+                };
+
+            }
+        );
+
+
+    return {
+        workouts
+    };
 }
 
 
-async function deleteWorkout(id) {
+function createSplit(days) {
 
-  if (
-    !confirm(
-      "Excluir este treino e seus exercícios?"
-    )
-  ) {
-    return;
-  }
+    const options = {
+
+        2: [
+            {
+                weekday: 1,
+                name: "Treino A — Corpo inteiro"
+            },
+            {
+                weekday: 4,
+                name: "Treino B — Corpo inteiro"
+            }
+        ],
+
+        3: [
+            {
+                weekday: 1,
+                name: "Treino A — Corpo inteiro"
+            },
+            {
+                weekday: 3,
+                name: "Treino B — Corpo inteiro"
+            },
+            {
+                weekday: 5,
+                name: "Treino C — Corpo inteiro"
+            }
+        ],
+
+        4: [
+            {
+                weekday: 1,
+                name: "Treino A — Superior"
+            },
+            {
+                weekday: 2,
+                name: "Treino B — Inferior"
+            },
+            {
+                weekday: 4,
+                name: "Treino C — Superior"
+            },
+            {
+                weekday: 5,
+                name: "Treino D — Inferior"
+            }
+        ],
+
+        5: [
+            {
+                weekday: 1,
+                name: "Peito + Tríceps"
+            },
+            {
+                weekday: 2,
+                name: "Costas + Bíceps"
+            },
+            {
+                weekday: 3,
+                name: "Pernas"
+            },
+            {
+                weekday: 4,
+                name: "Ombros + Core"
+            },
+            {
+                weekday: 5,
+                name: "Corpo inteiro"
+            }
+        ]
+
+    };
 
 
-  const { error } = await db
-    .from("workouts")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", currentUser.id);
-
-
-  if (error) {
-
-    toast(error.message);
-
-    return;
-
-  }
-
-
-  toast("Treino excluído.");
-
-  await loadWorkouts();
-
+    return options[days];
 }
 
 
-function closeModal() {
+function getExercises(
+    equipment,
+    goal
+) {
 
-  if ($("workoutDialog").open) {
+    const common = {
 
-    $("workoutDialog").close();
+        peito: [
+            "Supino com carga adequada",
+            "Flexão de braços",
+            "Crucifixo"
+        ],
 
-  }
+        costas: [
+            "Puxada",
+            "Remada",
+            "Remada unilateral"
+        ],
 
+        pernas: [
+            "Agachamento",
+            "Leg press",
+            "Elevação de panturrilhas"
+        ],
+
+        ombros: [
+            "Desenvolvimento de ombros",
+            "Elevação lateral",
+            "Elevação posterior"
+        ],
+
+        biceps: [
+            "Rosca de bíceps",
+            "Rosca martelo"
+        ],
+
+        triceps: [
+            "Tríceps na polia",
+            "Extensão de tríceps"
+        ],
+
+        core: [
+            "Prancha",
+            "Dead bug"
+        ]
+
+    };
+
+
+    if (equipment === "peso-corporal") {
+
+        return {
+
+            peito: [
+                "Flexão de braços"
+            ],
+
+            costas: [
+                "Remada invertida"
+            ],
+
+            pernas: [
+                "Agachamento livre",
+                "Avanço"
+            ],
+
+            ombros: [
+                "Flexão inclinada"
+            ],
+
+            biceps: [
+                "Rosca com resistência disponível"
+            ],
+
+            triceps: [
+                "Flexão com apoio adequado"
+            ],
+
+            core: [
+                "Prancha",
+                "Dead bug"
+            ]
+
+        };
+    }
+
+
+    return common;
 }
 
 
-function getDayName(day) {
+function chooseExercises(
+    split,
+    database,
+    experience
+) {
 
-  return DAYS[day] || "Dia inválido";
+    const result = [];
 
+
+    function addGroup(
+        group,
+        amount
+    ) {
+
+        const list =
+            database[group] || [];
+
+        list
+            .slice(0, amount)
+            .forEach(
+                name => {
+
+                    result.push({
+
+                        name,
+
+                        sets:
+                            experience ===
+                            "iniciante"
+                                ? 2
+                                : 3,
+
+                        reps:
+                            "8–12",
+
+                        weight:
+                            null,
+
+                        position:
+                            result.length
+
+                    });
+
+                }
+            );
+    }
+
+
+    const name =
+        split.name.toLowerCase();
+
+
+    if (
+        name.includes("superior") ||
+        name.includes("peito")
+    ) {
+
+        addGroup("peito", 2);
+        addGroup("costas", 2);
+        addGroup("ombros", 1);
+        addGroup("triceps", 1);
+        addGroup("biceps", 1);
+
+    } else if (
+        name.includes("inferior") ||
+        name.includes("pernas")
+    ) {
+
+        addGroup("pernas", 3);
+        addGroup("core", 1);
+
+    } else if (
+        name.includes("costas")
+    ) {
+
+        addGroup("costas", 3);
+        addGroup("biceps", 2);
+
+    } else if (
+        name.includes("corpo inteiro")
+    ) {
+
+        addGroup("pernas", 2);
+        addGroup("peito", 1);
+        addGroup("costas", 1);
+        addGroup("ombros", 1);
+        addGroup("core", 1);
+
+    } else {
+
+        addGroup("peito", 1);
+        addGroup("costas", 1);
+        addGroup("pernas", 2);
+        addGroup("ombros", 1);
+        addGroup("core", 1);
+    }
+
+
+    return result;
 }
 
 
-function getDayOrder(day) {
+/* =========================
+   RENDER GERADO
+========================= */
 
-  // Segunda começa a semana visualmente
-  const order = {
-    1: 0,
-    2: 1,
-    3: 2,
-    4: 3,
-    5: 4,
-    6: 5,
-    0: 6
-  };
+function renderGeneratedWorkout(
+    data
+) {
 
-  return order[day] ?? 99;
+    const container =
+        $("#generatedContent");
 
+
+    container.innerHTML =
+        data.workouts.map(
+            workout => `
+
+                <div
+                    class="generated-day"
+                    data-generated-day="${workout.weekday}"
+                >
+
+                    <h3>
+                        ${DAYS[workout.weekday]}
+                        — ${escapeHTML(
+                            workout.name
+                        )}
+                    </h3>
+
+                    ${
+                        workout.exercises
+                            .map(
+                                (exercise, index) => `
+
+                                    <div
+                                        class="generated-exercise"
+                                    >
+
+                                        <input
+                                            value="${escapeHTML(
+                                                exercise.name
+                                            )}"
+                                            data-name
+                                            data-index="${index}"
+                                        >
+
+                                        <input
+                                            value="${exercise.sets || ""}"
+                                            type="number"
+                                            min="1"
+                                            data-sets
+                                            data-index="${index}"
+                                        >
+
+                                        <input
+                                            value="${escapeHTML(
+                                                exercise.reps || ""
+                                            )}"
+                                            data-reps
+                                            data-index="${index}"
+                                        >
+
+                                    </div>
+                                `
+                            )
+                            .join("")
+                    }
+
+                </div>
+
+            `
+        ).join("");
+
+
+    $("#generatedWorkout")
+        .classList.remove("hidden");
 }
 
 
-function numOrNull(value) {
+/* =========================
+   SALVAR GERADO
+========================= */
 
-  return value === ""
-    ? null
-    : Number(value);
+$("#saveGeneratedButton")
+    .addEventListener(
+        "click",
+        async () => {
 
+            if (!generatedWorkout) {
+                return;
+            }
+
+
+            const days =
+                [...document.querySelectorAll(
+                    "[data-generated-day]"
+                )];
+
+
+            for (
+                const day of days
+            ) {
+
+                const weekday =
+                    Number(
+                        day.dataset.generatedDay
+                    );
+
+
+                const inputs =
+                    [...day.querySelectorAll(
+                        ".generated-exercise"
+                    )];
+
+
+                const original =
+                    generatedWorkout.workouts
+                        .find(
+                            item =>
+                                item.weekday ===
+                                weekday
+                        );
+
+
+                const exercises =
+                    inputs.map(
+                        (row, index) => {
+
+                            return {
+
+                                name:
+                                    row.querySelector(
+                                        "[data-name]"
+                                    ).value.trim(),
+
+                                sets:
+                                    Number(
+                                        row.querySelector(
+                                            "[data-sets]"
+                                        ).value
+                                    ) || null,
+
+                                reps:
+                                    row.querySelector(
+                                        "[data-reps]"
+                                    ).value.trim(),
+
+                                weight:
+                                    null,
+
+                                position:
+                                    index
+
+                            };
+
+                        }
+                    );
+
+
+                await saveWorkout({
+
+                    name:
+                        original.name,
+
+                    weekday,
+
+                    notes:
+                        original.notes,
+
+                    exercises
+
+                });
+            }
+
+
+            $("#generatedWorkout")
+                .classList.add("hidden");
+
+            generatedWorkout = null;
+
+            toast(
+                "Treino gerado salvo."
+            );
+        }
+    );
+
+
+/* =========================
+   PDF
+========================= */
+
+$("#pdfInput")
+    .addEventListener(
+        "change",
+        event => {
+
+            const file =
+                event.target.files[0];
+
+            if (!file) {
+                return;
+            }
+
+
+            if (
+                file.type !==
+                "application/pdf"
+            ) {
+
+                toast(
+                    "Selecione um arquivo PDF."
+                );
+
+                return;
+            }
+
+
+            if (
+                file.size >
+                10 * 1024 * 1024
+            ) {
+
+                toast(
+                    "O PDF deve ter no máximo 10 MB."
+                );
+
+                return;
+            }
+
+
+            selectedPdf = file;
+
+            $("#selectedFile")
+                .textContent =
+                    `${file.name} — ` +
+                    `${(
+                        file.size / 1024 / 1024
+                    ).toFixed(2)} MB`;
+
+            $("#importPdfButton")
+                .disabled = false;
+        }
+    );
+
+
+const uploadArea =
+    $("#uploadArea");
+
+
+uploadArea.addEventListener(
+    "dragover",
+    event => {
+
+        event.preventDefault();
+
+        uploadArea.classList.add(
+            "dragover"
+        );
+    }
+);
+
+
+uploadArea.addEventListener(
+    "dragleave",
+    () => {
+
+        uploadArea.classList.remove(
+            "dragover"
+        );
+    }
+);
+
+
+uploadArea.addEventListener(
+    "drop",
+    event => {
+
+        event.preventDefault();
+
+        uploadArea.classList.remove(
+            "dragover"
+        );
+
+
+        const file =
+            event.dataTransfer.files[0];
+
+        if (!file) {
+            return;
+        }
+
+
+        if (
+            file.type !==
+            "application/pdf"
+        ) {
+
+            toast(
+                "O arquivo precisa ser PDF."
+            );
+
+            return;
+        }
+
+
+        selectedPdf = file;
+
+        $("#selectedFile")
+            .textContent =
+                `${file.name} — ` +
+                `${(
+                    file.size / 1024 / 1024
+                ).toFixed(2)} MB`;
+
+        $("#importPdfButton")
+            .disabled = false;
+    }
+);
+
+
+/* =========================
+   ENVIAR PDF
+========================= */
+
+$("#importPdfButton")
+    .addEventListener(
+        "click",
+        importPdf
+    );
+
+
+async function importPdf() {
+
+    if (!selectedPdf) {
+        return;
+    }
+
+
+    showLoading(true);
+
+
+    try {
+
+        const base64 =
+            await fileToBase64(
+                selectedPdf
+            );
+
+
+        const response =
+            await fetch(
+                "/api/import-workout",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        fileName:
+                            selectedPdf.name,
+
+                        mimeType:
+                            selectedPdf.type,
+
+                        file:
+                            base64
+
+                    })
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.error ||
+                "Falha ao analisar PDF."
+            );
+        }
+
+
+        importedWorkout =
+            result.workout;
+
+
+        renderPdfPreview(
+            importedWorkout
+        );
+
+
+        toast(
+            "PDF analisado."
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+        toast(
+            error.message ||
+            "Erro ao importar PDF."
+        );
+
+    } finally {
+
+        showLoading(false);
+    }
 }
 
 
-function escapeHtml(value = "") {
+function fileToBase64(file) {
 
-  return String(value).replace(
-    /[&<>"']/g,
-    character => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[character])
-  );
+    return new Promise(
+        (resolve, reject) => {
 
+            const reader =
+                new FileReader();
+
+
+            reader.onload = () => {
+
+                const result =
+                    reader.result;
+
+                const base64 =
+                    result.split(",")[1];
+
+                resolve(base64);
+            };
+
+
+            reader.onerror =
+                reject;
+
+
+            reader.readAsDataURL(
+                file
+            );
+        }
+    );
 }
 
 
-function escapeAttr(value = "") {
+/* =========================
+   PRÉVIA PDF
+========================= */
 
-  return escapeHtml(String(value));
+function renderPdfPreview(
+    workout
+) {
 
+    const container =
+        $("#pdfPreviewContent");
+
+
+    container.innerHTML = `
+
+        <div class="field">
+
+            <label>
+                Nome do treino
+            </label>
+
+            <input
+                id="pdfWorkoutName"
+                value="${escapeHTML(
+                    workout.name ||
+                    "Treino importado"
+                )}"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Dia da semana
+            </label>
+
+            <select id="pdfWorkoutDay">
+
+                ${
+                    Object.entries(DAYS)
+                        .map(
+                            ([value, name]) =>
+                                `
+                                <option
+                                    value="${value}"
+                                    ${
+                                        Number(value) ===
+                                        Number(
+                                            workout.weekday
+                                        )
+                                            ? "selected"
+                                            : ""
+                                    }
+                                >
+                                    ${name}
+                                </option>
+                                `
+                        )
+                        .join("")
+                }
+
+            </select>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Observações
+            </label>
+
+            <textarea
+                id="pdfWorkoutNotes"
+                rows="3"
+            >${escapeHTML(
+                workout.notes || ""
+            )}</textarea>
+
+        </div>
+
+
+        <div>
+
+            <h3>
+                Exercícios
+            </h3>
+
+            <div id="pdfExercises">
+
+                ${
+                    (workout.exercises || [])
+                        .map(
+                            (exercise, index) => `
+
+                                <div
+                                    class="exercise-row"
+                                >
+
+                                    <input
+                                        class="pdf-name"
+                                        value="${escapeHTML(
+                                            exercise.name || ""
+                                        )}"
+                                        placeholder="Exercício"
+                                    >
+
+                                    <input
+                                        class="pdf-sets"
+                                        type="number"
+                                        value="${exercise.sets || ""}"
+                                        placeholder="Séries"
+                                    >
+
+                                    <input
+                                        class="pdf-reps"
+                                        value="${escapeHTML(
+                                            exercise.reps || ""
+                                        )}"
+                                        placeholder="Reps"
+                                    >
+
+                                    <input
+                                        class="pdf-weight"
+                                        type="number"
+                                        step="0.5"
+                                        value="${exercise.weight || ""}"
+                                        placeholder="Kg"
+                                    >
+
+                                    <button
+                                        type="button"
+                                        class="remove-exercise"
+                                        onclick="this.parentElement.remove()"
+                                    >
+                                        ×
+                                    </button>
+
+                                </div>
+
+                            `
+                        )
+                        .join("")
+                }
+
+            </div>
+
+        </div>
+    `;
+
+
+    $("#pdfPreview")
+        .classList.remove("hidden");
 }
 
 
-function toast(message) {
+/* =========================
+   SALVAR PDF
+========================= */
 
-  $("toast").textContent = message;
+$("#savePdfWorkoutButton")
+    .addEventListener(
+        "click",
+        async () => {
 
-  $("toast").classList.add("show");
-
-  setTimeout(
-    () => $("toast").classList.remove("show"),
-    2600
-  );
-
-}
-
-
-function loadTheme() {
-
-  if (
-    localStorage.getItem(
-      "trainerface-theme"
-    ) === "dark"
-  ) {
-
-    document.body.classList.add("dark");
-
-    $("themeToggle").textContent = "☀";
-
-  }
-
-}
+            const rows =
+                [...document.querySelectorAll(
+                    "#pdfExercises .exercise-row"
+                )];
 
 
-function toggleTheme() {
+            const exercises =
+                rows.map(
+                    (row, index) => ({
 
-  const dark =
-    document.body.classList.toggle("dark");
+                        name:
+                            row.querySelector(
+                                ".pdf-name"
+                            ).value.trim(),
 
-  localStorage.setItem(
-    "trainerface-theme",
-    dark ? "dark" : "light"
-  );
+                        sets:
+                            Number(
+                                row.querySelector(
+                                    ".pdf-sets"
+                                ).value
+                            ) || null,
 
-  $("themeToggle").textContent =
-    dark ? "☀" : "☾";
+                        reps:
+                            row.querySelector(
+                                ".pdf-reps"
+                            ).value.trim(),
 
-}
+                        weight:
+                            Number(
+                                row.querySelector(
+                                    ".pdf-weight"
+                                ).value
+                            ) || null,
+
+                        position:
+                            index
+
+                    })
+                );
+
+
+            await saveWorkout({
+
+                name:
+                    $("#pdfWorkoutName")
+                        .value.trim(),
+
+                weekday:
+                    Number(
+                        $("#pdfWorkoutDay")
+                            .value
+                    ),
+
+                notes:
+                    $("#pdfWorkoutNotes")
+                        .value.trim(),
+
+                exercises
+
+            });
+
+
+            $("#pdfPreview")
+                .classList.add("hidden");
+
+            importedWorkout = null;
+
+            selectedPdf = null;
+
+            $("#pdfInput").value = "";
+
+            $("#importPdfButton")
+                .disabled = true;
+
+            $("#selectedFile")
+                .textContent =
+                    "Nenhum arquivo selecionado";
+        }
+    );
+
+
+/* =========================
+   INICIALIZAÇÃO
+========================= */
+
+checkUser();

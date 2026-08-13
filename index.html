@@ -2,283 +2,684 @@
 <html lang="pt-BR">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#facc15">
+    <meta charset="UTF-8">
 
-  <title>TrainerFace — Sua rotina de treinos.</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  <link rel="stylesheet" href="css/style.css">
+    <meta
+        name="description"
+        content="Trainer Face - planejamento de treinos"
+    >
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Trainer Face</title>
+
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 
 <body>
 
-  <div id="toast"></div>
+<div id="loading" class="loading">
+    <div class="spinner"></div>
+</div>
 
-  <!-- LOGIN -->
-  <section id="authScreen" class="auth-screen">
+<header class="topbar">
 
-    <div class="auth-card">
+    <div class="brand">
+        <div class="brand-icon">TF</div>
 
-      <div class="brand">
-        <span>TF</span> TrainerFace
-      </div>
+        <div>
+            <h1>Trainer Face</h1>
+            <span>Planejamento de treinos</span>
+        </div>
+    </div>
 
-      <h1>Sua rotina. Organizada.</h1>
+    <div class="header-actions">
 
-      <p>
-        Organize seus treinos por dia da semana e tenha sua rotina sempre disponível.
-      </p>
-
-      <form id="authForm">
-
-        <label>E-mail</label>
-
-        <input id="email" type="email" autocomplete="email" required placeholder="seu@email.com">
-
-        <label>Senha</label>
-
-        <input id="password" type="password" autocomplete="current-password" minlength="6" required
-          placeholder="Mínimo de 6 caracteres">
-
-        <button class="primary" type="submit" id="authButton">
-          Entrar
+        <button
+            id="themeButton"
+            class="icon-button"
+            title="Alternar tema"
+        >
+            ◐
         </button>
 
-      </form>
-
-      <button class="link-button" id="toggleAuth">
-        Não tenho conta — criar agora
-      </button>
-
-      <p class="auth-message" id="authMessage"></p>
+        <button
+            id="logoutButton"
+            class="secondary-button"
+        >
+            Sair
+        </button>
 
     </div>
 
-  </section>
+</header>
 
 
-  <!-- APLICAÇÃO -->
-  <div id="app" class="hidden">
+<main class="container">
 
-    <header class="topbar">
-
-      <div class="brand">
-        <span>TF</span> TrainerFace
-      </div>
-
-      <div class="top-actions">
-
-        <button class="icon-btn" id="themeToggle" title="Alternar tema">
-          ☾
-        </button>
-
-        <button class="logout" id="logout">
-          Sair
-        </button>
-
-      </div>
-
-    </header>
-
-
-    <main class="container">
-
-      <!-- HERO -->
-      <section class="hero">
+    <section class="welcome-card">
 
         <div>
+            <span class="eyebrow">PAINEL</span>
 
-          <p class="eyebrow">
-            MINHA ROTINA
-          </p>
+            <h2>
+                Seus treinos planejados
+            </h2>
 
-          <h1>
-            Olá, <span id="userEmail"></span>
-          </h1>
+            <p>
+                Organize seus treinos por dia da semana.
+            </p>
+        </div>
 
-          <p>
-            Organize os treinos que você precisa fazer em cada dia da semana.
-          </p>
+    </section>
+
+
+    <nav class="tabs">
+
+        <button
+            class="tab active"
+            data-section="treinos"
+        >
+            Meus treinos
+        </button>
+
+        <button
+            class="tab"
+            data-section="montar"
+        >
+            Montar treino
+        </button>
+
+        <button
+            class="tab"
+            data-section="pdf"
+        >
+            Importar PDF
+        </button>
+
+    </nav>
+
+
+    <!-- ========================= -->
+    <!-- TREINOS -->
+    <!-- ========================= -->
+
+    <section
+        id="section-treinos"
+        class="section active"
+    >
+
+        <div class="section-header">
+
+            <div>
+                <span class="eyebrow">
+                    PLANEJAMENTO
+                </span>
+
+                <h2>
+                    Meus treinos
+                </h2>
+            </div>
+
+            <button
+                id="newWorkoutButton"
+                class="primary-button"
+            >
+                + Novo treino
+            </button>
 
         </div>
 
-        <button class="primary" id="newWorkout">
-          + Novo treino
-        </button>
 
-      </section>
+        <div
+            id="workoutList"
+            class="workout-grid"
+        ></div>
 
-
-      <!-- ESTATÍSTICAS -->
-      <section class="stats">
-
-        <article class="stat">
-          <span>Treinos cadastrados</span>
-          <strong id="totalWorkouts">0</strong>
-        </article>
-
-        <article class="stat">
-          <span>Dias com treino</span>
-          <strong id="activeDays">0</strong>
-        </article>
-
-        <article class="stat">
-          <span>Dias de descanso</span>
-          <strong id="restDays">7</strong>
-        </article>
-
-      </section>
+    </section>
 
 
-      <!-- FILTROS -->
-      <section class="toolbar">
+    <!-- ========================= -->
+    <!-- MONTAR TREINO -->
+    <!-- ========================= -->
 
-        <input id="search" type="search" placeholder="Pesquisar treino...">
+    <section
+        id="section-montar"
+        class="section"
+    >
 
-        <select id="filterDay">
+        <div class="section-header">
 
-          <option value="">Todos os dias</option>
+            <div>
+                <span class="eyebrow">
+                    GERADOR
+                </span>
 
-          <option value="1">Segunda-feira</option>
-          <option value="2">Terça-feira</option>
-          <option value="3">Quarta-feira</option>
-          <option value="4">Quinta-feira</option>
-          <option value="5">Sexta-feira</option>
-          <option value="6">Sábado</option>
-          <option value="0">Domingo</option>
+                <h2>
+                    Montar treino
+                </h2>
 
-        </select>
-
-        <button class="secondary" id="clearFilters">
-          Limpar filtros
-        </button>
-
-      </section>
-
-
-      <!-- TREINOS -->
-      <section id="workoutsList" class="workouts-grid"></section>
-
-
-      <!-- VAZIO -->
-      <div id="emptyState" class="empty hidden">
-
-        <div class="empty-icon">
-          +
-        </div>
-
-        <h2>Nenhum treino encontrado</h2>
-
-        <p>
-          Cadastre sua rotina semanal para começar.
-        </p>
-
-        <button class="primary" id="emptyNew">
-          Adicionar treino
-        </button>
-
-      </div>
-
-    </main>
-
-  </div>
-
-
-  <!-- MODAL -->
-  <dialog id="workoutDialog">
-
-    <form method="dialog" id="workoutForm" class="modal">
-
-      <div class="modal-header">
-
-        <div>
-
-          <p class="eyebrow">
-            ROTINA SEMANAL
-          </p>
-
-          <h2 id="modalTitle">
-            Novo treino
-          </h2>
+                <p>
+                    Informe seus dados para gerar uma sugestão
+                    de planejamento.
+                </p>
+            </div>
 
         </div>
 
-        <button type="button" class="close" id="closeModal">
-          ×
-        </button>
 
-      </div>
+        <form id="generatorForm" class="form-card">
 
+            <div class="form-grid">
 
-      <input type="hidden" id="workoutId">
+                <div class="field">
 
+                    <label for="weight">
+                        Peso
+                    </label>
 
-      <label>Dia da semana</label>
+                    <input
+                        id="weight"
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        placeholder="Ex.: 70"
+                    >
 
-      <select id="workoutDay" required>
+                    <small>
+                        Apenas para referência do perfil.
+                    </small>
 
-        <option value="">Selecione o dia</option>
-
-        <option value="1">Segunda-feira</option>
-        <option value="2">Terça-feira</option>
-        <option value="3">Quarta-feira</option>
-        <option value="4">Quinta-feira</option>
-        <option value="5">Sexta-feira</option>
-        <option value="6">Sábado</option>
-        <option value="0">Domingo</option>
-
-      </select>
-
-
-      <label>Nome do treino</label>
-
-      <input id="workoutName" required placeholder="Ex.: Peito e tríceps">
+                </div>
 
 
-      <label>Observações</label>
+                <div class="field">
 
-      <textarea id="workoutNotes" rows="3" placeholder="Observações sobre esse treino..."></textarea>
+                    <label for="height">
+                        Altura
+                    </label>
 
+                    <input
+                        id="height"
+                        type="number"
+                        step="0.01"
+                        min="0.5"
+                        placeholder="Ex.: 1.75"
+                    >
 
-      <div class="exercise-title">
-
-        <h3>
-          Exercícios
-        </h3>
-
-        <button type="button" class="secondary small" id="addExercise">
-          + Exercício
-        </button>
-
-      </div>
-
-
-      <div id="exerciseRows"></div>
+                </div>
 
 
-      <div class="modal-actions">
+                <div class="field">
 
-        <button type="button" class="secondary" id="cancelModal">
-          Cancelar
-        </button>
+                    <label for="age">
+                        Idade
+                    </label>
 
-        <button type="submit" class="primary" id="saveWorkout">
-          Salvar treino
-        </button>
+                    <input
+                        id="age"
+                        type="number"
+                        min="1"
+                        max="100"
+                        placeholder="Ex.: 18"
+                    >
 
-      </div>
-
-    </form>
-
-  </dialog>
+                </div>
 
 
-  <script src="js/supabase.js"></script>
-  <script src="js/app.js"></script>
+                <div class="field">
+
+                    <label for="experience">
+                        Experiência
+                    </label>
+
+                    <select id="experience">
+
+                        <option value="iniciante">
+                            Iniciante
+                        </option>
+
+                        <option value="intermediario">
+                            Intermediário
+                        </option>
+
+                        <option value="avancado">
+                            Avançado
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="goal">
+                        Objetivo
+                    </label>
+
+                    <select id="goal">
+
+                        <option value="geral">
+                            Condicionamento geral
+                        </option>
+
+                        <option value="forca">
+                            Força
+                        </option>
+
+                        <option value="hipertrofia">
+                            Desenvolvimento muscular
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="daysPerWeek">
+                        Dias por semana
+                    </label>
+
+                    <select id="daysPerWeek">
+
+                        <option value="2">
+                            2 dias
+                        </option>
+
+                        <option value="3">
+                            3 dias
+                        </option>
+
+                        <option value="4" selected>
+                            4 dias
+                        </option>
+
+                        <option value="5">
+                            5 dias
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="duration">
+                        Tempo por treino
+                    </label>
+
+                    <select id="duration">
+
+                        <option value="30">
+                            30 minutos
+                        </option>
+
+                        <option value="45">
+                            45 minutos
+                        </option>
+
+                        <option value="60" selected>
+                            60 minutos
+                        </option>
+
+                        <option value="90">
+                            90 minutos
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="equipment">
+                        Equipamentos
+                    </label>
+
+                    <select id="equipment">
+
+                        <option value="academia">
+                            Academia
+                        </option>
+
+                        <option value="halteres">
+                            Halteres
+                        </option>
+
+                        <option value="peso-corporal">
+                            Peso corporal
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="primary-button full"
+            >
+                Montar treino
+            </button>
+
+        </form>
+
+
+        <div
+            id="generatedWorkout"
+            class="preview-card hidden"
+        >
+
+            <div class="preview-header">
+
+                <div>
+                    <span class="eyebrow">
+                        PRÉVIA
+                    </span>
+
+                    <h2>
+                        Treino gerado
+                    </h2>
+                </div>
+
+                <button
+                    id="saveGeneratedButton"
+                    class="primary-button"
+                >
+                    Salvar treino
+                </button>
+
+            </div>
+
+            <div
+                id="generatedContent"
+            ></div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- PDF -->
+    <!-- ========================= -->
+
+    <section
+        id="section-pdf"
+        class="section"
+    >
+
+        <div class="section-header">
+
+            <div>
+
+                <span class="eyebrow">
+                    IMPORTAÇÃO
+                </span>
+
+                <h2>
+                    Importar treino em PDF
+                </h2>
+
+                <p>
+                    Envie um PDF contendo seu treino.
+                    O sistema irá interpretar os exercícios
+                    e mostrar uma prévia antes de salvar.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="upload-card">
+
+            <label
+                for="pdfInput"
+                class="upload-area"
+                id="uploadArea"
+            >
+
+                <div class="upload-icon">
+                    PDF
+                </div>
+
+                <h3>
+                    Selecione seu arquivo
+                </h3>
+
+                <p>
+                    Clique aqui ou arraste um PDF.
+                </p>
+
+                <span id="selectedFile">
+                    Nenhum arquivo selecionado
+                </span>
+
+                <input
+                    id="pdfInput"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    hidden
+                >
+
+            </label>
+
+
+            <button
+                id="importPdfButton"
+                class="primary-button full"
+                disabled
+            >
+                Analisar PDF
+            </button>
+
+        </div>
+
+
+        <div
+            id="pdfPreview"
+            class="preview-card hidden"
+        >
+
+            <div class="preview-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        PRÉVIA
+                    </span>
+
+                    <h2>
+                        Treino encontrado
+                    </h2>
+
+                </div>
+
+                <button
+                    id="savePdfWorkoutButton"
+                    class="primary-button"
+                >
+                    Salvar treino
+                </button>
+
+            </div>
+
+
+            <div id="pdfPreviewContent"></div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- ========================= -->
+<!-- MODAL NOVO TREINO -->
+<!-- ========================= -->
+
+<div
+    id="workoutModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <div>
+
+                <span class="eyebrow">
+                    NOVO
+                </span>
+
+                <h2>
+                    Criar treino
+                </h2>
+
+            </div>
+
+            <button
+                id="closeModal"
+                class="close-button"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="manualWorkoutForm">
+
+            <div class="field">
+
+                <label>
+                    Nome do treino
+                </label>
+
+                <input
+                    id="manualName"
+                    required
+                    placeholder="Ex.: Peito e tríceps"
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Dia da semana
+                </label>
+
+                <select id="manualWeekday">
+
+                    <option value="1">
+                        Segunda-feira
+                    </option>
+
+                    <option value="2">
+                        Terça-feira
+                    </option>
+
+                    <option value="3">
+                        Quarta-feira
+                    </option>
+
+                    <option value="4">
+                        Quinta-feira
+                    </option>
+
+                    <option value="5">
+                        Sexta-feira
+                    </option>
+
+                    <option value="6">
+                        Sábado
+                    </option>
+
+                    <option value="0">
+                        Domingo
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Observações
+                </label>
+
+                <textarea
+                    id="manualNotes"
+                    rows="3"
+                    placeholder="Observações..."
+                ></textarea>
+
+            </div>
+
+
+            <div>
+
+                <div class="exercise-title">
+
+                    <h3>
+                        Exercícios
+                    </h3>
+
+                    <button
+                        type="button"
+                        id="addExerciseButton"
+                        class="secondary-button"
+                    >
+                        + Exercício
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="manualExercises"
+                ></div>
+
+            </div>
+
+
+            <button
+                class="primary-button full"
+                type="submit"
+            >
+                Salvar treino
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div
+    id="toast"
+    class="toast"
+></div>
+
+
+<script type="module" src="./js/app.js"></script>
 
 </body>
-
 </html>
