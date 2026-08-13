@@ -884,3 +884,49 @@ textarea:focus {
     }
 
 }
+
+.loading {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 99999;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(8, 8, 11, .92);
+
+    backdrop-filter: blur(8px);
+}
+
+.loading.hidden {
+    display: none !important;
+}
+
+.loading.show {
+    display: flex !important;
+}
+
+.spinner {
+    width: 36px;
+    height: 36px;
+
+    border: 3px solid #292932;
+
+    border-top-color: #7c3aed;
+
+    border-radius: 50%;
+
+    animation: trainerFaceSpin .8s linear infinite;
+}
+
+@keyframes trainerFaceSpin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
