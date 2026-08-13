@@ -1,138 +1,88 @@
 import { supabase } from "./supabase.js";
 
-const form =
-    document.querySelector(
-        "#loginForm"
-    );
+const loginForm = document.getElementById("loginForm");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const message = document.getElementById("loginMessage");
 
-const message =
-    document.querySelector(
-        "#loginMessage"
-    );
-
-function showMessage(
-    text,
-    error = false
-) {
+function setMessage(text, error = true) {
     if (!message) return;
 
-    message.textContent =
-        text;
+    message.textContent = text;
 
-    message.style.color =
-        error
-            ? "#ff5c5c"
-            : "";
+    message.style.color = error
+        ? "#fca5a5"
+        : "#86efac";
 }
 
-async function redirectUser() {
-    const {
-        data: {
-            user
-        }
-    } = await supabase.auth.getUser();
+function setLoading(loading) {
+    const button = loginForm?.querySelector(
+        'button[type="submit"]'
+    );
 
-    if (!user) return;
+    if (!button) return;
 
-    const {
-        data: profile
-    } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq(
-            "id",
-            user.id
-        )
-        .single();
+    button.disabled = loading;
 
-    if (
-        profile?.role ===
-        "admin"
-    ) {
-        window.location.href =
-            "index.html";
-
-        return;
-    }
-
-    if (
-        profile?.role ===
-        "monitor"
-    ) {
-        window.location.href =
-            "index.html";
-
-        return;
-    }
-
-    window.location.href =
-        "index.html";
+    button.textContent = loading
+        ? "Entrando..."
+        : "Entrar";
 }
 
-form?.addEventListener(
-    "submit",
-    async event => {
-
+if (loginForm) {
+    loginForm.addEventListener("submit", async event => {
         event.preventDefault();
 
-        const email =
-            document.querySelector(
-                "#email"
-            )?.value
-                ?.trim();
-
-        const password =
-            document.querySelector(
-                "#password"
-            )?.value;
+        const email = emailInput?.value.trim();
+        const password = passwordInput?.value;
 
         if (!email || !password) {
-            showMessage(
-                "Preencha todos os campos.",
-                true
-            );
-
+            setMessage("Preencha e-mail e senha.");
             return;
         }
 
-        showMessage(
-            "Entrando..."
-        );
+        setLoading(true);
+        setMessage("");
 
-        const {
-            error
-        } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
+        try {
+            const {
+                data,
+                error
+            } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
 
-        if (error) {
-            showMessage(
-                error.message,
-                true
-            );
-
-            return;
-        }
-
-        await redirectUser();
-    }
-);
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
-
-        const {
-            data: {
-                session
+            if (error) {
+                throw error;
             }
-        } =
-            await supabase.auth.getSession();
 
-        if (session) {
-            await redirectUser();
+            if (!data?.user) {
+                throw new Error(
+                    "Não foi possível autenticar o usuário."
+                );
+            }
+
+            setMessage(
+                "Login realizado. Carregando...",
+                false
+            );
+
+            window.location.replace("./index.html");
+
+        } catch (error) {
+
+            console.error(
+                "[TrainerFace] Erro no login:",
+                error
+            );
+
+            setMessage(
+                error?.message ||
+                "E-mail ou senha inválidos."
+            );
+
+            setLoading(false);
         }
-
-    }
-);
+    });
+}
