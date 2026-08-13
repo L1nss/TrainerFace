@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Login — Trainer Face</title>
+
+    <link rel="stylesheet" href="./css/login.css" />
+  </head>
+
+  <body>
+    <main class="auth-container">
+      <section class="auth-card">
+        <div class="logo">TF</div>
+
+        <h1>Trainer Face</h1>
+
+        <p class="subtitle">Organize seus treinos por semana.</p>
+
+        <div class="auth-tabs">
+          <button id="loginTab" class="auth-tab active" type="button">
+            Entrar
+          </button>
+
+          <button id="signupTab" class="auth-tab" type="button">
+            Criar conta
+          </button>
+        </div>
+
+        <form id="loginForm">
+          <div class="field">
+            <label for="loginEmail"> E-mail </label>
+
+            <input
+              id="loginEmail"
+              type="email"
+              placeholder="seu@email.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="loginPassword"> Senha </label>
+
+            <input
+              id="loginPassword"
+              type="password"
+              placeholder="Sua senha"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <button type="submit" class="primary-button">Entrar</button>
+        </form>
+
+        <form id="signupForm" class="hidden">
+          <div class="field">
+            <label for="signupEmail"> E-mail </label>
+
+            <input
+              id="signupEmail"
+              type="email"
+              placeholder="seu@email.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="signupPassword"> Senha </label>
+
+            <input
+              id="signupPassword"
+              type="password"
+              placeholder="Mínimo de 6 caracteres"
+              autocomplete="new-password"
+              minlength="6"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="signupPasswordConfirm"> Confirmar senha </label>
+
+            <input
+              id="signupPasswordConfirm"
+              type="password"
+              placeholder="Repita sua senha"
+              autocomplete="new-password"
+              minlength="6"
+              required
+            />
+          </div>
+
+          <button type="submit" class="primary-button">Criar conta</button>
+        </form>
+
+        <p id="message" class="message"></p>
+
+        <button id="themeButton" class="theme-button" type="button">
+          Alternar tema
+        </button>
+      </section>
+    </main>
+
+    <script type="module" src="./js/login.js"></script>
+  </body>
+</html>
