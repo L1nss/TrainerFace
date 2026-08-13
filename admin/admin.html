@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+    <title>
+        TrainerFace — Administração
+    </title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/rbac-additions.css">
+
+</head>
+
+<body>
+
+    <header class="topbar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                TF
+            </div>
+
+            <div>
+
+                <h1>
+                    Trainer Face
+                </h1>
+
+                <span>
+                    Administração
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="header-actions">
+
+            <a href="../index.html" class="secondary-button">
+                Voltar
+            </a>
+
+            <button id="logoutButton" class="secondary-button">
+                Sair
+            </button>
+
+        </div>
+
+    </header>
+
+    <main class="container">
+
+        <section class="welcome-card">
+
+            <div>
+
+                <span class="eyebrow">
+                    ADMIN
+                </span>
+
+                <h2>
+                    Gerenciamento de usuários
+                </h2>
+
+                <p>
+                    Controle papéis e vincule monitores aos usuários.
+                </p>
+
+            </div>
+
+        </section>
+
+        <section class="form-card">
+
+            <h2>
+                Usuários
+            </h2>
+
+            <div style="overflow-x:auto">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Papel</th>
+                            <th>Ação</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="users"></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+        <section class="form-card">
+
+            <h2>
+                Vincular monitor
+            </h2>
+
+            <div class="form-grid">
+
+                <div class="field">
+
+                    <label>
+                        Monitor
+                    </label>
+
+                    <select id="monitorSelect">
+                        <option value="">
+                            Selecione
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="field">
+
+                    <label>
+                        Usuário
+                    </label>
+
+                    <select id="userSelect">
+                        <option value="">
+                            Selecione
+                        </option>
+                    </select>
+
+                </div>
+
+            </div>
+
+            <button id="assignButton" class="primary-button">
+                Vincular
+            </button>
+
+        </section>
+
+        <section class="form-card">
+
+            <h2>
+                Vínculos atuais
+            </h2>
+
+            <div id="assignments"></div>
+
+        </section>
+
+    </main>
+
+    <script type="module" src="../js/admin.js"></script>
+
+</body>
+
+</html>
