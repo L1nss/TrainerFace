@@ -1,0 +1,54 @@
+:root{
+  --bg:#08080b;--bg2:#0d0d12;--card:#111116;--card2:#17171e;--border:#292932;
+  --text:#f5f5f7;--muted:#a1a1aa;--primary:#7c3aed;--primary-hover:#8b5cf6;
+  --primary-soft:rgba(124,58,237,.14);--danger:#ef4444;--radius:14px;--small-radius:9px
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{min-height:100vh;background:radial-gradient(circle at top right,rgba(124,58,237,.10),transparent 35%),var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+body.light{--bg:#f5f5f7;--bg2:#fff;--card:#fff;--card2:#f4f4f5;--border:#dedee4;--text:#18181b;--muted:#71717a}
+button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}
+#loading.loading{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+#loading.loading.hidden,.hidden{display:none!important}
+.spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.topbar{position:sticky;top:0;z-index:1000;min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px 30px;background:rgba(8,8,11,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(16px)}
+body.light .topbar{background:rgba(255,255,255,.92)}
+.brand{display:flex;align-items:center;gap:12px}.brand-icon{width:43px;height:43px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:linear-gradient(135deg,var(--primary),#a855f7);color:#fff;font-weight:900}
+.brand h1{font-size:18px}.brand span{display:block;color:var(--muted);font-size:11px}
+.header-actions,.card-actions,.button-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.icon-button,.secondary-button,.primary-button{border:0;border-radius:var(--small-radius);min-height:40px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+.icon-button{width:40px;padding:0;background:var(--card2);border:1px solid var(--border);color:var(--text)}
+.secondary-button{background:var(--card2);border:1px solid var(--border);color:var(--text)}
+.primary-button{background:var(--primary);color:#fff}.primary-button:hover{background:var(--primary-hover)}.primary-button.full{width:100%}
+.container{width:min(1200px,calc(100% - 40px));margin:0 auto;padding:30px 0 60px}
+.welcome-card,.form-card,.preview-card,.workout-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+.welcome-card{padding:28px;margin-bottom:20px;background:linear-gradient(135deg,rgba(124,58,237,.16),transparent),var(--card)}
+.welcome-card h2{margin-top:5px;font-size:clamp(25px,4vw,34px)}.welcome-card p,.section-header p{color:var(--muted)}
+.eyebrow{color:#a78bfa;font-size:11px;font-weight:900;letter-spacing:.12em}
+.tabs{display:flex;gap:5px;margin-bottom:25px;padding:5px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow-x:auto}
+.tab{min-height:40px;padding:0 15px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-weight:700;white-space:nowrap}.tab.active{background:var(--primary);color:#fff}
+.section{display:none}.section.active{display:block}
+.section-header,.preview-header,.exercise-title{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.section-header h2{font-size:25px}.preview-header h2{font-size:20px}
+.form-card,.preview-card{padding:20px}.preview-card{margin-top:18px}
+.form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:18px}
+.field{display:flex;flex-direction:column;gap:7px}.field label{font-size:13px;font-weight:700}.field small{color:var(--muted)}
+input,select,textarea{width:100%;min-height:42px;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--small-radius);color:var(--text);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+textarea{min-height:100px;resize:vertical}
+.workout-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.workout-card{padding:18px}
+.workout-card h3{margin:6px 0;font-size:18px}.workout-card p{color:var(--muted);font-size:13px}
+.workout-day{display:inline-flex;padding:4px 9px;border-radius:999px;background:var(--primary-soft);color:#c4b5fd;font-size:11px;font-weight:800}
+.exercise-list{list-style:none;display:flex;flex-direction:column;gap:9px;margin:14px 0}.exercise-list li{padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:9px}
+.exercise-row,.generated-exercise{display:grid;grid-template-columns:2fr .7fr .8fr .8fr auto;gap:8px;margin-bottom:8px}
+.remove-exercise,.close-button{border:0;background:transparent;color:var(--text);font-size:22px}
+.generated-day{padding:14px 0;border-bottom:1px solid var(--border)}.generated-day:last-child{border-bottom:0}
+.modal{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72)}
+.modal-box{width:min(760px,100%);max-height:90vh;overflow:auto;padding:22px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.toast{position:fixed;right:20px;bottom:20px;z-index:3000;max-width:360px;padding:12px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px;opacity:0;pointer-events:none;transform:translateY(10px);transition:.2s}
+.toast.show{opacity:1;transform:translateY(0)}
+.empty{padding:24px;text-align:center;color:var(--muted);background:var(--card);border:1px dashed var(--border);border-radius:var(--radius)}
+@media(max-width:900px){.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.topbar{padding:10px 14px}.container{width:min(100% - 24px,1200px)}.workout-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.section-header,.preview-header{align-items:flex-start;flex-direction:column}.exercise-row,.generated-exercise{grid-template-columns:1fr 1fr}.exercise-row .exercise-name,.generated-exercise input:first-child{grid-column:1/-1}}
